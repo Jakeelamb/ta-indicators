@@ -1,0 +1,21 @@
+[package]
+name = "rustalib"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Jake"]
+license = "MIT"
+description = "Warmup-exact Rust port of TA-Lib batch technical indicators"
+repository = "https://github.com/Jakeelamb/rustalib"
+readme = "README.md"
+keywords = ["talib", "technical-analysis", "indicators", "trading", "candlestick"]
+categories = ["algorithms", "science"]
+
+[dependencies]
+
+[dev-dependencies]
+serde_json = "1"
+
+[lib]
+name = "rustalib"
+path = "src/lib.rs"
