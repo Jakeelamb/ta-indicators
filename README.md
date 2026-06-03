@@ -1,4 +1,4 @@
-# rustalib
+# talib-rs
 
 Warmup-exact Rust port of [TA-Lib](https://ta-lib.org/) batch indicators. Outputs use
 `Option<f64>` with `None` on warmup bars, matching TA-Lib's emitted-value semantics bar
@@ -58,11 +58,11 @@ cargo test
 Add to `Cargo.toml`:
 
 ```toml
-rustalib = { git = "https://github.com/Jakeelamb/rustalib.git", branch = "main" }
+talib-rs = { git = "https://github.com/Jakeelamb/talib-rs.git", branch = "main" }
 ```
 
 ```rust
-use rustalib::{rsi, macd, ht_dcperiod, cdl_engulfing};
+use talib_rs::{rsi, macd, ht_dcperiod, cdl_engulfing};
 
 let rsi_14 = rsi(&closes, 14);
 let macd_out = macd(&closes, 12, 26, 9);

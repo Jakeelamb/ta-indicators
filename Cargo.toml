@@ -1,12 +1,12 @@
 [package]
-name = "rustalib"
+name = "talib-rs"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Jake"]
 license = "MIT"
 description = "Warmup-exact Rust port of TA-Lib batch technical indicators"
-repository = "https://github.com/Jakeelamb/rustalib"
+repository = "https://github.com/Jakeelamb/talib-rs"
 readme = "README.md"
 keywords = ["talib", "technical-analysis", "indicators", "trading", "candlestick"]
 categories = ["algorithms", "science"]
@@ -17,5 +17,5 @@ categories = ["algorithms", "science"]
 serde_json = "1"
 
 [lib]
-name = "rustalib"
+name = "talib_rs"
 path = "src/lib.rs"

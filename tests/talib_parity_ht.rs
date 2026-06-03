@@ -7,7 +7,7 @@
 //! TA-Lib emitted a value.
 
 use serde_json::Value;
-use rustalib as ta;
+use talib_rs as ta;
 
 const REL_TOL: f64 = 1e-6;
 const ABS_TOL: f64 = 1e-6;
