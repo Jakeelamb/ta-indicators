@@ -25,8 +25,13 @@
 //! TradingView export CSVs rather than TA-Lib.
 
 mod candles;
+pub mod streaming;
 pub mod tradingview;
 pub use candles::*;
+pub use streaming::{
+    CachedHurst, ChoppinessIndex, IncrementalRsi, IncrementalSma, RegimeDetector, RegimeState,
+    StreamingAdx, StreamingOrderflow,
+};
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
