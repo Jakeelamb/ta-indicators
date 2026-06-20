@@ -942,6 +942,44 @@ pub fn ultosc(
     out
 }
 
+pub fn trange(highs: &[f64], lows: &[f64], closes: &[f64]) -> Vec<Option<f64>> {
+    let len = highs.len().min(lows.len()).min(closes.len());
+    let mut out = vec![None; len];
+    for idx in 1..len {
+        let high = highs[idx];
+        let low = lows[idx];
+        let prev_close = closes[idx - 1];
+        let value = high.max(prev_close) - low.min(prev_close);
+        out[idx] = finite(value);
+    }
+    out
+}
+
+pub fn atr(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) -> Vec<Option<f64>> {
+    let tr = trange(highs, lows, closes);
+    let mut out = vec![None; tr.len()];
+    if period == 0 || tr.len() <= period {
+        return out;
+    }
+
+    let mut sum = 0.0;
+    for value in tr.iter().take(period + 1).skip(1) {
+        let Some(value) = value else {
+            return out;
+        };
+        sum += value;
+    }
+
+    let mut current = sum / period as f64;
+    out[period] = Some(current);
+    for idx in period + 1..tr.len() {
+        let Some(value) = tr[idx] else { continue };
+        current = (current * (period as f64 - 1.0) + value) / period as f64;
+        out[idx] = Some(current);
+    }
+    out
+}
+
 pub fn dema(values: &[f64], period: usize) -> Vec<Option<f64>> {
     let ema1 = ema(values, period);
     let ema2 = ema(&option_values(&ema1), period);

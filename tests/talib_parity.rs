@@ -164,6 +164,8 @@ fn registry(i: &Inputs) -> Vec<(&'static str, Vec<Option<f64>>)> {
         ("aroon_osc_14", ar.oscillator),
         ("ad", ta::ad(h, l, c, v)),
         ("adosc_3_10", ta::adosc(h, l, c, v, 3, 10)),
+        ("trange", ta::trange(h, l, c)),
+        ("atr_14", ta::atr(h, l, c, 14)),
         ("sar_0p02_0p2", ta::sar(h, l, 0.02, 0.2)),
         (
             "sarext_default",

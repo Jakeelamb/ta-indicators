@@ -18,7 +18,7 @@ The crates.io package is `ta-indicators`; the Rust library import name is `ta_in
 - Publish target: crates.io package `ta-indicators`, Rust crate import `ta_indicators`.
 - Runtime dependencies: none.
 - License: MIT plus BSD-3-Clause notice for adapted rolling-window techniques.
-- Parity gate: 121 checked-in TA-Lib reference series plus 11 TradingView CSV
+- Parity gate: 123 checked-in TA-Lib reference series plus 11 TradingView CSV
   golden families.
 - Package dry run: 34 files, about 333 KiB compressed.
 
@@ -95,7 +95,7 @@ small point structs in `Vec<Option<_>>`; warmup or unavailable rows are `None`.
 
 | File | Keys | Lookback groups |
 | --- | ---: | --- |
-| `tests/talib_parity.rs` | 111 | Momentum, overlap, stats, SAR, CDL, … |
+| `tests/talib_parity.rs` | 113 | Momentum, overlap, volatility, stats, SAR, CDL, … |
 | `tests/talib_parity_ht.rs` | 10 | Hilbert / MAMA family |
 | `tests/tradingview_golden.rs` | 11 | TradingView CSV-exported indicator families |
 
@@ -165,9 +165,9 @@ behavior.
 
 ## Coverage
 
-The checked-in parity suite currently covers 121 TA-Lib reference series:
+The checked-in parity suite currently covers 123 TA-Lib reference series:
 
-- 50 numeric indicator outputs across overlap, momentum, volatility, volume,
+- 52 numeric indicator outputs across overlap, momentum, volatility, volume,
   price transforms, statistics, SAR/SAREXT, MACD/MACDEXT-SMA, and linear regression.
 - 10 Hilbert/MAMA outputs.
 - 61 `CDL*` candle pattern outputs.

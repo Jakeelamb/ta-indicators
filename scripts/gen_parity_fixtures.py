@@ -187,6 +187,8 @@ def main() -> None:
     # Volume / volatility / transforms / math
     expected["ad"] = clean(talib.AD(h, low, c, v))
     expected["adosc_3_10"] = clean(talib.ADOSC(h, low, c, v, fastperiod=3, slowperiod=10))
+    expected["trange"] = clean(talib.TRANGE(h, low, c))
+    expected["atr_14"] = clean(talib.ATR(h, low, c, timeperiod=14))
     expected["sar_0p02_0p2"] = clean(talib.SAR(h, low, acceleration=0.02, maximum=0.2))
     expected["sum_10"] = clean(talib.SUM(c, timeperiod=10))
     expected["avgprice"] = clean(talib.AVGPRICE(o, h, low, c))
