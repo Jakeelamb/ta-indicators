@@ -1,7 +1,7 @@
-//! Incremental O(1)-per-bar indicators for live detectors and feature caches.
-//!
-//! Batch TA-Lib ports live in the crate root; this module holds streaming state
-//! machines used by strategy detectors (RSI, SMA, ADX, regime, orderflow, etc.).
+
+
+
+
 
 pub mod adx;
 pub mod choppiness;

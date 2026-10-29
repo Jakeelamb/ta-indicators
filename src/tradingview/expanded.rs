@@ -1,7 +1,7 @@
-//! Golden TradingView-backed strategy/feature families.
-//!
-//! This module contains only the expanded golden implementations that are
-//! checked against TradingView CSV exports.
+
+
+
+
 
 use super::{Candle, safe_div, sma, tv_features::Side};
 

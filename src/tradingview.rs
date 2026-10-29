@@ -1,8 +1,8 @@
-//! TradingView CSV-validated indicator families.
-//!
-//! These are Rust implementations of open-source TradingView indicator ideas.
-//! They are kept separate from the crate-root TA-Lib parity surface because the
-//! reference oracle is committed TradingView CSV exports, not TA-Lib.
+
+
+
+
+
 
 mod expanded;
 mod tv_features;

@@ -1,9 +1,9 @@
-//! Machine-readable contracts for indicator functions admitted to a research lane.
-//!
-//! The crate contains many more functions than this initial inventory. An
-//! indicator appears here only after its input, warmup, continuity, and oracle
-//! semantics have been made explicit. Absence from this inventory does not
-//! reject an indicator from future certification.
+
+
+
+
+
+
 
 use core::fmt;
 
@@ -23,10 +23,10 @@ pub enum IndicatorOracle {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ContinuityRequirement {
-    /// Every input row belongs to the next eligible exchange session.
-    ///
-    /// Callers must split or restart a lane at a missing/ineligible session.
-    /// They must not bridge the gap by inserting synthetic OHLC values.
+
+
+
+
     DenseEligibleSessions,
 }
 
@@ -127,11 +127,11 @@ pub const WILDER_ATR: IndicatorContract = IndicatorContract::new(
     ContinuityRequirement::DenseEligibleSessions,
 );
 
-/// Contracts admitted to the first MAUR population preflight.
-///
-/// This inventory certifies formula semantics only. The caller still owns
-/// causal session selection, price-basis lineage, and prior-completed
-/// availability.
+
+
+
+
+
 pub const MAUR_POPULATION_PREFLIGHT_INDICATORS: &[IndicatorContract] = &[EMA, WILDER_ATR];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

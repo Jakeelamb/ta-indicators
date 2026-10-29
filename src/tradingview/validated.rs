@@ -1,7 +1,7 @@
-//! TradingView golden-validated indicator families.
-//!
-//! This module is the supported indicator surface. Each exported family has a
-//! checked TradingView CSV fixture under `tests/fixtures/tradingview_expected/`.
+
+
+
+
 
 pub use super::expanded::{
     AnchoredVwapPoint, DarvasTurtleBreakoutPoint, HeikinAshiPoint, IchimokuCloudPoint,

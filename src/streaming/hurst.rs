@@ -1,16 +1,16 @@
-//! Cached Hurst Exponent calculation.
-//!
-//! The Hurst exponent uses R/S analysis which is O(n²) per calculation.
-//! Instead of computing on every candle, we cache the result and only
-//! recompute every N candles (e.g., every 20 candles).
-//!
-//! H < 0.5: Mean-reverting (anti-persistent)
-//! H = 0.5: Random walk
-//! H > 0.5: Trending (persistent)
 
-/// Cached Hurst exponent calculator.
-///
-/// Recomputes only every `interval` candles to avoid O(n²) per-candle cost.
+
+
+
+
+
+
+
+
+
+
+
+
 #[derive(Debug, Clone)]
 pub struct CachedHurst {
     lookback: usize,
@@ -21,11 +21,11 @@ pub struct CachedHurst {
 }
 
 impl CachedHurst {
-    /// Create a new Hurst calculator.
-    ///
-    /// # Arguments
-    /// * `lookback` - Number of prices to use for R/S analysis (typically 100)
-    /// * `interval` - How often to recompute (e.g., every 20 candles)
+
+
+
+
+
     pub fn new(lookback: usize, interval: usize) -> Self {
         Self {
             lookback,
@@ -36,26 +36,26 @@ impl CachedHurst {
         }
     }
 
-    /// Update with a new close price and return Hurst exponent.
-    ///
-    /// Returns the cached value on most calls, only recomputing every `interval` candles.
+
+
+
     pub fn update(&mut self, close: f64) -> Option<f64> {
         self.prices.push(close);
 
-        // Trim to prevent unbounded growth
+
         if self.prices.len() > self.lookback + self.interval {
             self.prices.drain(0..self.interval);
             self.last_index = self.last_index.saturating_sub(self.interval);
         }
 
-        // Check if we have enough data
+
         if self.prices.len() < self.lookback {
             return None;
         }
 
         let current_index = self.prices.len();
 
-        // Recompute only every `interval` candles
+
         if current_index >= self.last_index + self.interval || self.cached_value.is_none() {
             let start = self.prices.len().saturating_sub(self.lookback);
             let prices = &self.prices[start..];
@@ -66,27 +66,27 @@ impl CachedHurst {
         self.cached_value
     }
 
-    /// Get the current cached Hurst value without updating.
+
     #[inline]
     pub fn current(&self) -> Option<f64> {
         self.cached_value
     }
 
-    /// Check if Hurst is ready.
+
     #[inline]
     pub fn is_ready(&self) -> bool {
         self.cached_value.is_some()
     }
 
-    /// Compute Hurst exponent using R/S analysis.
-    ///
-    /// This is the core algorithm matching Python's regime module:79-180.
+
+
+
     pub fn compute_hurst(prices: &[f64]) -> Option<f64> {
         if prices.len() < 20 {
             return None;
         }
 
-        // Calculate log returns
+
         let returns: Vec<f64> = prices
             .windows(2)
             .filter_map(|w| {
@@ -102,7 +102,7 @@ impl CachedHurst {
             return None;
         }
 
-        // R/S analysis with multiple sub-periods
+
         let mut results: Vec<(f64, f64)> = Vec::with_capacity(5);
 
         for n in [10usize, 20, 40, 60, 80] {
@@ -126,10 +126,10 @@ impl CachedHurst {
 
                 let segment = &returns[start..end];
 
-                // Mean
+
                 let mean: f64 = segment.iter().sum::<f64>() / segment.len() as f64;
 
-                // Cumulative deviations
+
                 let mut cumsum = Vec::with_capacity(segment.len());
                 let mut total = 0.0;
                 for &x in segment {
@@ -137,11 +137,11 @@ impl CachedHurst {
                     cumsum.push(total);
                 }
 
-                // Range
+
                 let r = cumsum.iter().cloned().fold(f64::NEG_INFINITY, f64::max)
                     - cumsum.iter().cloned().fold(f64::INFINITY, f64::min);
 
-                // Standard deviation
+
                 let variance: f64 =
                     segment.iter().map(|&x| (x - mean).powi(2)).sum::<f64>() / segment.len() as f64;
                 let s = if variance > 0.0 {
@@ -167,7 +167,7 @@ impl CachedHurst {
             return None;
         }
 
-        // Linear regression to find slope (Hurst exponent)
+
         let n_points = results.len() as f64;
         let sum_x: f64 = results.iter().map(|r| r.0).sum();
         let sum_y: f64 = results.iter().map(|r| r.1).sum();
@@ -176,18 +176,18 @@ impl CachedHurst {
 
         let denominator = n_points * sum_xx - sum_x.powi(2);
         if denominator == 0.0 {
-            return Some(0.5); // Default to random walk
+            return Some(0.5);
         }
 
         let hurst = (n_points * sum_xy - sum_x * sum_y) / denominator;
 
-        // Clamp to valid range [0, 1]
+
         Some(hurst.clamp(0.0, 1.0))
     }
 
-    /// Compute Hurst for a slice of prices (batch mode).
-    ///
-    /// Returns Hurst values at each position, recomputing every `interval` candles.
+
+
+
     pub fn compute_batch(prices: &[f64], lookback: usize, interval: usize) -> Vec<f64> {
         let mut result = vec![f64::NAN; prices.len()];
         let mut hurst = Self::new(lookback, interval);
@@ -249,7 +249,7 @@ mod tests {
         let hurst = CachedHurst::compute_hurst(&prices);
 
         if let Some(h) = hurst {
-            // Trending series should have H > 0.5
+
             assert!(h > 0.4, "Expected trending H > 0.4, got {}", h);
         }
     }
@@ -258,7 +258,7 @@ mod tests {
     fn test_hurst_caching() {
         let mut hurst = CachedHurst::new(100, 20);
 
-        // Feed 150 prices
+
         for i in 0..150 {
             let price = 100.0 + (i as f64) * 0.1;
             hurst.update(price);
@@ -274,10 +274,10 @@ mod tests {
         let prices: Vec<f64> = (0..200).map(|i| 100.0 + (i as f64) * 0.1).collect();
         let result = CachedHurst::compute_batch(&prices, 100, 20);
 
-        // First 99 values should be NaN (not enough data)
+
         assert!(result[50].is_nan());
 
-        // Later values should be valid
+
         assert!(!result[150].is_nan());
         assert!((0.0..=1.0).contains(&result[150]));
     }

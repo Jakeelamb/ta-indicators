@@ -1,28 +1,28 @@
-//! Warmup-exact batch port of TA-Lib technical indicators for Rust.
-//!
-//! See crate README for module layout and parity policy.
-//!
-//! # Example
-//!
-//! ```
-//! use ta_indicators::{bollinger_bands, macd, rsi};
-//!
-//! let closes = [100.0, 101.0, 102.0, 101.5, 103.0, 104.0, 103.5, 105.0];
-//! let rsi_3 = rsi(&closes, 3);
-//! let macd_out = macd(&closes, 3, 6, 3);
-//! let bands = bollinger_bands(&closes, 3, 2.0);
-//!
-//! assert_eq!(rsi_3.len(), closes.len());
-//! assert_eq!(macd_out.macd.len(), closes.len());
-//! assert_eq!(bands.middle.len(), closes.len());
-//! ```
-//!
-//! Outputs use `Option<f64>` for numeric indicators. Warmup bars are `None`;
-//! emitted bars are matched against committed TA-Lib reference fixtures.
-//!
-//! TradingView CSV-validated families live under [`tradingview`]. They are
-//! intentionally namespaced separately because their reference oracle is
-//! TradingView export CSVs rather than TA-Lib.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 mod candles;
 pub mod registry;
@@ -144,9 +144,9 @@ pub fn ema(values: &[f64], period: usize) -> Vec<Option<f64>> {
     out
 }
 
-/// SMA-seeded EMA whose seed is the average of the `period` raw values ending
-/// at `seed_end`, then the standard EMA recurrence forward from there. This
-/// matches TA-Lib's `TA_INT_EMA` when its output start is forced to `seed_end`.
+
+
+
 fn ema_seeded_at(values: &[f64], period: usize, seed_end: usize) -> Vec<Option<f64>> {
     let mut out = vec![None; values.len()];
     if period == 0 || seed_end >= values.len() || seed_end + 1 < period {
@@ -163,8 +163,8 @@ fn ema_seeded_at(values: &[f64], period: usize, seed_end: usize) -> Vec<Option<f
     out
 }
 
-/// EMA over an `Option` series that is contiguously valid from `valid_start`,
-/// SMA-seeded over its first `period` values. Used for the MACD signal line.
+
+
 fn ema_seeded_options(
     series: &[Option<f64>],
     period: usize,
@@ -205,9 +205,9 @@ pub fn macd(values: &[f64], fast: usize, slow: usize, signal: usize) -> Macd {
             hist: vec![None; len],
         };
     }
-    // TA-Lib aligns both EMAs' SMA seed to the slow EMA's start (`slow - 1`),
-    // so the fast EMA is seeded over the same window's tail rather than its own
-    // natural warmup. The MACD line is then `fastEMA - slowEMA` from there.
+
+
+
     let seed_end = fast.max(slow) - 1;
     let fast_ema = ema_seeded_at(values, fast, seed_end);
     let slow_ema = ema_seeded_at(values, slow, seed_end);
@@ -233,7 +233,7 @@ pub fn macdfix(values: &[f64], signal: usize) -> Macd {
     macd(values, 12, 26, signal)
 }
 
-/// Simple moving average over a raw series. First value at index `period - 1`.
+
 fn sma(values: &[f64], period: usize) -> Vec<Option<f64>> {
     rolling_sum(values, period)
         .into_iter()
@@ -241,8 +241,8 @@ fn sma(values: &[f64], period: usize) -> Vec<Option<f64>> {
         .collect()
 }
 
-/// Simple moving average over an `Option` series; a window is only emitted when
-/// all `period` members are present (matches TA-Lib MA-of-MA warmup behavior).
+
+
 fn sma_options(series: &[Option<f64>], period: usize) -> Vec<Option<f64>> {
     let mut out = vec![None; series.len()];
     if period == 0 {
@@ -261,9 +261,9 @@ fn sma_options(series: &[Option<f64>], period: usize) -> Vec<Option<f64>> {
     out
 }
 
-/// MACDEXT with all three moving averages set to SMA (TA-Lib `matype = 0`).
-/// fast SMA − slow SMA forms the MACD line; an SMA over the MACD line forms the
-/// signal. Matches `talib.MACDEXT(.., fastmatype=0, slowmatype=0, signalmatype=0)`.
+
+
+
 pub fn macdext_sma(values: &[f64], fast: usize, slow: usize, signal: usize) -> Macd {
     let len = values.len();
     if fast == 0 || slow == 0 || signal == 0 {
@@ -293,10 +293,10 @@ pub fn macdext_sma(values: &[f64], fast: usize, slow: usize, signal: usize) -> M
     }
 }
 
-/// Variable-period simple moving average (TA-Lib `MAVP`, `matype = 0`). Each
-/// bar uses `periods[idx]` truncated to an integer and clamped to
-/// `[min_period, max_period]`; the global warmup is `max_period - 1` so every
-/// emitted bar has a full window.
+
+
+
+
 pub fn mavp(
     values: &[f64],
     periods: &[f64],
@@ -345,10 +345,10 @@ pub fn mavp(
     out
 }
 
-/// Rolling BETA of `real0` against `real1` (TA-Lib `BETA`). Uses `period`
-/// trailing simple returns; `beta = (n·Σxy − Σx·Σy) / (n·Σxx − (Σx)²)` where
-/// `x` are `real0` returns and `y` are `real1` returns. First value at index
-/// `period`.
+
+
+
+
 pub fn beta(real0: &[f64], real1: &[f64], period: usize) -> Vec<Option<f64>> {
     let len = real0.len().min(real1.len());
     let mut out = vec![None; real0.len()];
@@ -361,8 +361,8 @@ pub fn beta(real0: &[f64], real1: &[f64], period: usize) -> Vec<Option<f64>> {
         && real0[..len - 1].iter().all(|value| *value != 0.0)
         && real1[..len - 1].iter().all(|value| *value != 0.0)
     {
-        // Sliding return sums adapted from talib-rs 0.1.2 (BSD-3-Clause);
-        // see THIRD_PARTY_NOTICES.md.
+
+
         let mut sx = 0.0;
         let mut sy = 0.0;
         let mut sxx = 0.0;
@@ -430,9 +430,9 @@ pub fn beta(real0: &[f64], real1: &[f64], period: usize) -> Vec<Option<f64>> {
     out
 }
 
-/// Rolling Pearson correlation of `real0` and `real1` (TA-Lib `CORREL`) over a
-/// trailing window of raw values. First value at index `period - 1`; when the
-/// variance product is non-positive TA-Lib emits `0.0`.
+
+
+
 pub fn correl(real0: &[f64], real1: &[f64], period: usize) -> Vec<Option<f64>> {
     let len = real0.len().min(real1.len());
     let mut out = vec![None; real0.len()];
@@ -446,8 +446,8 @@ pub fn correl(real0: &[f64], real1: &[f64], period: usize) -> Vec<Option<f64>> {
     if real0[..len].iter().all(|value| value.is_finite())
         && real1[..len].iter().all(|value| value.is_finite())
     {
-        // Sliding-window update adapted from talib-rs 0.1.2 (BSD-3-Clause);
-        // see THIRD_PARTY_NOTICES.md.
+
+
         let mut sx = 0.0;
         let mut sy = 0.0;
         let mut sxx = 0.0;
@@ -658,11 +658,11 @@ pub fn kama(values: &[f64], period: usize) -> Vec<Option<f64>> {
     }
     let fast_sc = 2.0 / (2.0 + 1.0);
     let slow_sc = 2.0 / (30.0 + 1.0);
-    // TA-Lib seeds the running KAMA with the prior close (`values[period - 1]`)
-    // and applies a full smoothing step on the first emitted bar.
+
+
     if values.iter().all(|value| value.is_finite()) {
-        // Rolling volatility update adapted from talib-rs 0.1.2
-        // (BSD-3-Clause); see THIRD_PARTY_NOTICES.md.
+
+
         let mut current = values[period - 1];
         let mut volatility = 0.0;
         for idx in 1..=period {
@@ -738,8 +738,8 @@ pub fn bollinger_bands(values: &[f64], period: usize, deviations: f64) -> Bollin
         };
     }
     if period <= values.len() && values.iter().all(|value| value.is_finite()) {
-        // Sliding-window update adapted from talib-rs 0.1.2 (BSD-3-Clause);
-        // see THIRD_PARTY_NOTICES.md.
+
+
         let inv_period = 1.0 / period as f64;
         let mut sum = 0.0;
         let mut sum_sq = 0.0;
@@ -824,8 +824,8 @@ pub fn cmo(values: &[f64], period: usize) -> Vec<Option<f64>> {
     if period == 0 || values.len() <= period {
         return out;
     }
-    // TA-Lib CMO uses Wilder smoothing of the up/down sums (identical to RSI's
-    // running average), not a simple trailing window.
+
+
     let mut gains = 0.0;
     let mut losses = 0.0;
     for idx in 1..values.len() {
@@ -875,8 +875,8 @@ pub fn ultosc(
         && lows[..len].iter().all(|value| value.is_finite())
         && closes[..len].iter().all(|value| value.is_finite())
     {
-        // Rolling BP/TR sums adapted from talib-rs 0.1.2 (BSD-3-Clause);
-        // see THIRD_PARTY_NOTICES.md.
+
+
         let mut buying_pressure = vec![0.0; len];
         let mut true_range = vec![0.0; len];
         for idx in 1..len {
@@ -1190,8 +1190,8 @@ pub fn linear_regression(values: &[f64], period: usize) -> LinearRegression {
         };
     }
     if period <= values.len() && values.iter().all(|value| value.is_finite()) {
-        // Sliding weighted-sum update adapted from talib-rs 0.1.2
-        // (BSD-3-Clause); see THIRD_PARTY_NOTICES.md.
+
+
         let n = period as f64;
         let sum_x = n * (n - 1.0) * 0.5;
         let sum_x2 = n * (n - 1.0) * (2.0 * n - 1.0) / 6.0;
@@ -1279,9 +1279,9 @@ pub fn sar(highs: &[f64], lows: &[f64], acceleration: f64, maximum: f64) -> Vec<
     if len < 2 || acceleration <= 0.0 || maximum <= 0.0 {
         return out;
     }
-    // TA-Lib picks the initial trend from the first bar's directional movement,
-    // seeds SAR/EP from bars 0 and 1, emits the seed at index 1 with no step,
-    // and only folds in the second prior extreme once two real prior bars exist.
+
+
+
     let dm_plus = highs[1] - highs[0];
     let dm_minus = lows[0] - lows[1];
     let mut long = !(dm_minus > 0.0 && dm_minus > dm_plus);
@@ -1329,11 +1329,11 @@ pub fn sar(highs: &[f64], lows: &[f64], acceleration: f64, maximum: f64) -> Vec<
     out
 }
 
-/// Parabolic SAR Extended (TA-Lib `SAREXT`). Mirrors the proven `sar` core but
-/// adds: explicit start value / initial direction, per-side acceleration
-/// (init/step/max for long and short), an offset-on-reverse, and TA-Lib's sign
-/// convention where short bars are emitted as the negated SAR. First value at
-/// index 1.
+
+
+
+
+
 #[allow(clippy::too_many_arguments)]
 pub fn sarext(
     highs: &[f64],
@@ -1469,8 +1469,8 @@ pub fn adosc(
     if fast == 0 || slow == 0 || len == 0 {
         return out;
     }
-    // TA-Lib seeds both AD-line EMAs with the first AD value, runs the recurrence
-    // from bar 1, and emits the oscillator from `slow - 1`.
+
+
     let fast_k = 2.0 / (fast as f64 + 1.0);
     let slow_k = 2.0 / (slow as f64 + 1.0);
     let mut fast_ema = ad_line[0];
@@ -1525,10 +1525,10 @@ pub fn adx_family(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) ->
             .max((lows[idx] - closes[idx - 1]).abs());
     }
 
-    // TA-Lib seeds the Wilder sums over the first `period - 1` deltas (indices
-    // 1..=period-1), then applies the first smoothing step at `idx == period`,
-    // which folds in the period-th delta. Using the Wilder "sum" form here is
-    // exact for the DI ratios (the period factor cancels).
+
+
+
+
     let mut smooth_tr = tr[1..period].iter().sum::<f64>();
     let mut smooth_plus = plus_dm[1..period].iter().sum::<f64>();
     let mut smooth_minus = minus_dm[1..period].iter().sum::<f64>();
@@ -1570,8 +1570,8 @@ pub fn adx_family(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) ->
         }
     }
 
-    // TA-Lib ADXR averages the current ADX with the ADX from `period - 1` bars
-    // back (not `period`).
+
+
     let adxr_lag = period - 1;
     for idx in adxr_lag..len {
         if let (Some(current), Some(prior)) = (adx[idx], adx[idx - adxr_lag]) {
@@ -1604,8 +1604,8 @@ pub fn aroon(highs: &[f64], lows: &[f64], period: usize) -> Aroon {
         && highs[..len].iter().all(|value| value.is_finite())
         && lows[..len].iter().all(|value| value.is_finite())
     {
-        // Rolling extremum index update adapted from talib-rs 0.1.2
-        // (BSD-3-Clause); see THIRD_PARTY_NOTICES.md.
+
+
         let scale = 100.0 / period as f64;
         let window = period + 1;
         let mut high_value = highs[0];
@@ -1682,8 +1682,8 @@ pub fn aroon(highs: &[f64], lows: &[f64], period: usize) -> Aroon {
             oscillator,
         };
     }
-    // TA-Lib scans a trailing window of `period + 1` bars (the current bar plus
-    // the prior `period`), emitting the first value at index `period`.
+
+
     for idx in period..len {
         let start = idx - period;
         let mut high_value = f64::NEG_INFINITY;
@@ -1723,28 +1723,28 @@ pub fn aroon(highs: &[f64], lows: &[f64], period: usize) -> Aroon {
     }
 }
 
-// ===========================================================================
-// Hilbert Transform family (John Ehlers): HT_DCPERIOD, HT_PHASOR, MAMA/FAMA,
-// HT_DCPHASE, HT_SINE, HT_TRENDLINE, HT_TRENDMODE.
-//
-// Faithful port of TA-Lib's shared Hilbert core. Every 32-lookback function
-// (DCPERIOD, PHASOR, MAMA/FAMA) shares one identical warmup trajectory, and
-// every 63-lookback function (DCPHASE, SINE, TRENDLINE, TRENDMODE) shares
-// another. Because the cores are bit-for-bit identical across functions in a
-// group, we run two unified passes and slice each function's output from them
-// (this yields exactly the same values TA-Lib produces per-function).
-// ===========================================================================
+
+
+
+
+
+
+
+
+
+
+
 
 const HT_A: f64 = 0.0962;
 const HT_B: f64 = 0.5769;
 
 #[inline]
 fn ht_rad2deg() -> f64 {
-    // TA-Lib: rad2Deg = 45.0 / atan(1) = 180/PI.
+
     45.0 / (1.0_f64).atan()
 }
 
-/// Period-4 weighted moving average smoother (TA-Lib DO_PRICE_WMA macro state).
+
 struct HtWma {
     sub: f64,
     sum: f64,
@@ -1766,8 +1766,8 @@ impl HtWma {
     }
 }
 
-/// One Hilbert transform channel with odd/even circular buffers
-/// (TA-Lib HILBERT_VARIABLES / DO_HILBERT_TRANSFORM macros).
+
+
 #[derive(Default)]
 struct HtChannel {
     odd: [f64; 3],
@@ -1812,8 +1812,8 @@ struct Ht32 {
     fama: Vec<Option<f64>>,
 }
 
-/// Unified 32-lookback Hilbert pass. `fast_limit`/`slow_limit` only affect the
-/// MAMA/FAMA outputs; DCPERIOD and PHASOR are independent of them.
+
+
 fn ht32(close: &[f64], fast_limit: f64, slow_limit: f64) -> Ht32 {
     let n = close.len();
     let lookback = 32usize;
@@ -1835,7 +1835,7 @@ fn ht32(close: &[f64], fast_limit: f64, slow_limit: f64) -> Ht32 {
     let start_idx = lookback;
     let end_idx = n - 1;
 
-    let mut today = 0usize; // trailing_wma_idx = start_idx - lookback = 0
+    let mut today = 0usize;
     let mut t = close[today];
     today += 1;
     let mut sub = t;
@@ -1916,7 +1916,7 @@ fn ht32(close: &[f64], fast_limit: f64, slow_limit: f64) -> Ht32 {
             i1 = i1_odd_prev3;
         }
 
-        // MAMA / FAMA adaptive smoothing.
+
         let alpha_phase = if i1 != 0.0 {
             (q1v / i1).atan() * rad2deg
         } else {
@@ -1936,7 +1936,7 @@ fn ht32(close: &[f64], fast_limit: f64, slow_limit: f64) -> Ht32 {
         let alpha_half = alpha * 0.5;
         fama = alpha_half * mama + (1.0 - alpha_half) * fama;
 
-        // Dominant-cycle period update (shared by all 32-lookback functions).
+
         re = 0.2 * ((i2 * prev_i2) + (q2 * prev_q2)) + 0.8 * re;
         im = 0.2 * ((i2 * prev_q2) - (q2 * prev_i2)) + 0.8 * im;
         prev_q2 = q2;
@@ -1984,7 +1984,7 @@ struct Ht63 {
     trendmode: Vec<Option<f64>>,
 }
 
-/// Unified 63-lookback Hilbert pass (DCPHASE, SINE, TRENDLINE, TRENDMODE).
+
 fn ht63(close: &[f64]) -> Ht63 {
     const SMOOTH_PRICE_SIZE: usize = 50;
     let n = close.len();
@@ -1993,7 +1993,7 @@ fn ht63(close: &[f64]) -> Ht63 {
     let mut sine = vec![None; n];
     let mut leadsine = vec![None; n];
     let mut trendline = vec![None; n];
-    // TA-Lib zero-fills the TREND_MODE warmup region (integer 0/1, no nulls).
+
     let mut trendmode = vec![Some(0.0); n];
     if n <= lookback {
         return Ht63 {
@@ -2006,7 +2006,7 @@ fn ht63(close: &[f64]) -> Ht63 {
     }
     let rad2deg = ht_rad2deg();
     let deg2rad = 1.0 / rad2deg;
-    let const_deg2rad_by360 = (1.0_f64).atan() * 8.0; // = 2*PI
+    let const_deg2rad_by360 = (1.0_f64).atan() * 8.0;
     let start_idx = lookback;
     let end_idx = n - 1;
 
@@ -2115,7 +2115,7 @@ fn ht63(close: &[f64]) -> Ht63 {
 
         let prev_dc_phase = dc_phase;
 
-        // Dominant cycle phase from the smoothed-price circular buffer.
+
         let dc_period_int = (smooth_period + 0.5) as i32;
         let mut real_part = 0.0;
         let mut imag_part = 0.0;
@@ -2155,8 +2155,8 @@ fn ht63(close: &[f64]) -> Ht63 {
         sine_val = (dc_phase * deg2rad).sin();
         lead_sine_val = ((dc_phase + 45.0) * deg2rad).sin();
 
-        // Trendline: average of raw close over the dominant-cycle period,
-        // smoothed by the iTrend WMA.
+
+
         let dc_period_int2 = (smooth_period + 0.5) as i32;
         let mut sum_close = 0.0;
         let mut k = today as i64;
@@ -2175,7 +2175,7 @@ fn ht63(close: &[f64]) -> Ht63 {
         i_trend2 = i_trend1;
         i_trend1 = sum_close;
 
-        // Trend mode (assume trend, then disqualify).
+
         let mut trend = 1i32;
         if (sine_val > lead_sine_val && prev_sine <= prev_lead_sine)
             || (sine_val < lead_sine_val && prev_sine >= prev_lead_sine)
@@ -2223,18 +2223,18 @@ fn ht63(close: &[f64]) -> Ht63 {
     }
 }
 
-/// HT_DCPERIOD — dominant cycle period.
+
 pub fn ht_dcperiod(close: &[f64]) -> Vec<Option<f64>> {
     ht32(close, 0.5, 0.05).dcperiod
 }
 
-/// HT_PHASOR — (in-phase, quadrature) components.
+
 pub fn ht_phasor(close: &[f64]) -> (Vec<Option<f64>>, Vec<Option<f64>>) {
     let out = ht32(close, 0.5, 0.05);
     (out.inphase, out.quadrature)
 }
 
-/// MAMA — (MAMA, FAMA) adaptive moving averages.
+
 pub fn mama(
     close: &[f64],
     fast_limit: f64,
@@ -2244,23 +2244,23 @@ pub fn mama(
     (out.mama, out.fama)
 }
 
-/// HT_DCPHASE — dominant cycle phase.
+
 pub fn ht_dcphase(close: &[f64]) -> Vec<Option<f64>> {
     ht63(close).dcphase
 }
 
-/// HT_SINE — (sine, lead sine) wave.
+
 pub fn ht_sine(close: &[f64]) -> (Vec<Option<f64>>, Vec<Option<f64>>) {
     let out = ht63(close);
     (out.sine, out.leadsine)
 }
 
-/// HT_TRENDLINE — instantaneous trendline.
+
 pub fn ht_trendline(close: &[f64]) -> Vec<Option<f64>> {
     ht63(close).trendline
 }
 
-/// HT_TRENDMODE — trend vs cycle mode (1 = trend, 0 = cycle; warmup zero-filled).
+
 pub fn ht_trendmode(close: &[f64]) -> Vec<Option<f64>> {
     ht63(close).trendmode
 }
@@ -2409,8 +2409,8 @@ mod tests {
 
     #[test]
     fn aroon_detects_recent_high_and_old_low() {
-        // TA-Lib scans a `period + 1` bar window and emits the first value at
-        // index `period`, so a period-4 Aroon needs 5 bars.
+
+
         let highs = [1.0, 2.0, 3.0, 4.0, 5.0];
         let lows = [1.0, 2.0, 3.0, 4.0, 5.0];
         let out = aroon(&highs, &lows, 4);
