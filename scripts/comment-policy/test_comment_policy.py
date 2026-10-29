@@ -4,6 +4,7 @@ import json
 import tempfile
 import subprocess
 import sqlite3
+import sys
 import unittest
 from pathlib import Path
 
@@ -358,8 +359,18 @@ class SafetyTests(unittest.TestCase):
             policy.transform(source, "sql")
 
     def test_unterminated_html_comment_refused(self):
-        with self.assertRaisesRegex(policy.Refusal, "unterminated HTML comment"):
-            policy.transform(b"<div>before</div><!-- retained prose", "html")
+        source = b"<div>before</div><!-- retained prose"
+        with self.assertRaises(policy.Refusal):
+            policy.transform(source, "html")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "malformed.html"
+            path.write_bytes(source)
+            result = subprocess.run([sys.executable, "-B", str(Path(policy.__file__)), "--write", str(path)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            report = json.loads(result.stdout)
+            self.assertTrue(report["refused"])
+            self.assertEqual(report["files"][0]["status"], "refused")
+            self.assertEqual(path.read_bytes(), source)
 
     def test_tracked_common_source_cannot_bypass_selector(self):
         with tempfile.TemporaryDirectory() as directory:
