@@ -430,3 +430,25 @@ class InterpreterDirectiveTests(unittest.TestCase):
                 status = policy.main([str(root / "linked" / "a.py"), "--write"])
             self.assertEqual(status, 2)
             self.assertIn(b"# keep until refusal", source.read_bytes())
+
+
+class DocumentationPointerTests(unittest.TestCase):
+    def test_non_source_documentation_directory_link_is_not_a_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", directory], check=True)
+            documentation = root / "documentation"
+            documentation.mkdir()
+            (documentation / "SKILL.md").write_text("# Verification instructions\n")
+            pointer = root / ".agents" / "skills" / "verify-saber"
+            pointer.parent.mkdir(parents=True)
+            pointer.symlink_to(documentation, target_is_directory=True)
+            (root / "source.py").write_text("x=1\n")
+            (root / "linked.py").symlink_to(root / "source.py")
+            (root / "broken.py").symlink_to(root / "absent.py")
+            subprocess.run(["git", "add", "."], cwd=root, check=True)
+            selected = {path.relative_to(root).as_posix() for path in policy.tracked_sources(root)}
+            self.assertEqual(selected, {"source.py", "linked.py", "broken.py"})
+            with contextlib.redirect_stdout(io.StringIO()):
+                status = policy.main(["--repo", str(root), "--write"])
+            self.assertEqual(status, 2)

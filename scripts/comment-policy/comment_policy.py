@@ -700,8 +700,9 @@ def tracked_sources(root):
         if not name:
             continue
         path = root / name
-        if path.is_symlink():
-            selected.append(path)
+        if path.is_symlink() and not path.is_file():
+            if path.suffix in LANGUAGES or path.suffix in KNOWN_UNSUPPORTED or path.name in {"Makefile", "GNUmakefile", "makefile", "Cargo.lock", "uv.lock", "Doxyfile", ".gitignore", ".gitattributes", ".dockerignore", ".stignore"} or path.name.startswith(("Makefile.", "Dockerfile", ".env")):
+                selected.append(path)
             continue
         if not path.is_file():
             continue
