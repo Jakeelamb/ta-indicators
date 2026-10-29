@@ -1,16 +1,16 @@
-//! Choppiness Index indicator.
-//!
-//! CI = 100 * LOG10(SUM(ATR, n) / (Highest High - Lowest Low)) / LOG10(n)
-//!
-//! CI < 38.2: Strong trend
-//! CI 38.2-61.8: Transitional
-//! CI > 61.8: Choppy/ranging
+
+
+
+
+
+
+
 
 use std::collections::VecDeque;
 
-/// Choppiness Index calculator.
-///
-/// Uses a sliding window for efficient updates.
+
+
+
 #[derive(Debug, Clone)]
 pub struct ChoppinessIndex {
     period: usize,
@@ -22,7 +22,7 @@ pub struct ChoppinessIndex {
 }
 
 impl ChoppinessIndex {
-    /// Create a new Choppiness Index calculator.
+
     pub fn new(period: usize) -> Self {
         Self {
             period,
@@ -34,7 +34,7 @@ impl ChoppinessIndex {
         }
     }
 
-    /// Calculate True Range.
+
     #[inline]
     fn true_range(high: f64, low: f64, prev_close: f64) -> f64 {
         (high - low)
@@ -42,15 +42,15 @@ impl ChoppinessIndex {
             .max((low - prev_close).abs())
     }
 
-    /// Update with a new candle and return Choppiness Index.
-    ///
-    /// Returns None until we have `period + 1` candles.
+
+
+
     pub fn update(&mut self, high: f64, low: f64, close: f64) -> Option<f64> {
         self.highs.push_back(high);
         self.lows.push_back(low);
         self.closes.push_back(close);
 
-        // Calculate TR for this candle
+
         if self.closes.len() > 1 {
             let prev_close = self.closes[self.closes.len() - 2];
             let tr = Self::true_range(high, low, prev_close);
@@ -58,7 +58,7 @@ impl ChoppinessIndex {
             self.tr_values.push_back(tr);
             self.tr_sum += tr;
 
-            // Remove oldest TR if we have too many
+
             if self.tr_values.len() > self.period {
                 if let Some(oldest_tr) = self.tr_values.pop_front() {
                     self.tr_sum -= oldest_tr;
@@ -66,19 +66,19 @@ impl ChoppinessIndex {
             }
         }
 
-        // Remove oldest OHLC if we have too many
+
         if self.highs.len() > self.period + 1 {
             self.highs.pop_front();
             self.lows.pop_front();
             self.closes.pop_front();
         }
 
-        // Check if we have enough data
+
         if self.tr_values.len() < self.period {
             return None;
         }
 
-        // Calculate highest high and lowest low over period (excluding first bar)
+
         let highest: f64 = self
             .highs
             .iter()
@@ -94,23 +94,23 @@ impl ChoppinessIndex {
 
         let range_diff = highest - lowest;
         if range_diff <= 0.0 {
-            return Some(100.0); // Maximum choppiness if no range
+            return Some(100.0);
         }
 
-        // Choppiness Index formula
+
         let ci = 100.0 * (self.tr_sum / range_diff).log10() / (self.period as f64).log10();
 
-        // Clamp to valid range
+
         Some(ci.clamp(0.0, 100.0))
     }
 
-    /// Check if ready.
+
     #[inline]
     pub fn is_ready(&self) -> bool {
         self.tr_values.len() >= self.period
     }
 
-    /// Compute Choppiness Index for arrays (batch mode).
+
     pub fn compute_arrays(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) -> Vec<f64> {
         assert_eq!(highs.len(), lows.len());
         assert_eq!(lows.len(), closes.len());
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_choppiness_ranging() {
-        // Ranging market: price oscillates in a narrow range
+
         let highs = vec![
             100.0, 100.5, 100.3, 100.7, 100.2, 100.6, 100.4, 100.8, 100.1, 100.5, 100.3, 100.6,
             100.2, 100.7, 100.4, 100.5,
@@ -150,7 +150,7 @@ mod tests {
 
         let result = ChoppinessIndex::compute_arrays(&highs, &lows, &closes, 14);
 
-        // Ranging market should have high choppiness (>50)
+
         if !result[15].is_nan() {
             assert!(
                 result[15] > 40.0,
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_choppiness_trending() {
-        // Strong uptrend
+
         let mut highs = Vec::new();
         let mut lows = Vec::new();
         let mut closes = Vec::new();
@@ -176,9 +176,9 @@ mod tests {
 
         let result = ChoppinessIndex::compute_arrays(&highs, &lows, &closes, 14);
 
-        // Strong trend should have lower choppiness
+
         if !result[19].is_nan() {
-            // In strong trends, CI is typically lower
+
             assert!(
                 result[19] < 80.0,
                 "Expected moderate CI for trending market, got {}",

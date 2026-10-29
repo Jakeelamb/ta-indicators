@@ -1,14 +1,14 @@
-//! Synthetic orderflow from candle geometry.
-//!
-//! No L2 data needed — OHLCV encodes orderflow:
-//! - Buying pressure: (close - low) / (high - low)
-//! - Cumulative delta proxy: EMA of (close - open) * volume
-//! - Absorption: high volume + small body = orders absorbed without moving price
 
-/// Streaming orderflow estimator from candle geometry.
-///
-/// Computes buying/selling pressure, cumulative delta proxy via EMA,
-/// and absorption detection per candle. All O(1) per update.
+
+
+
+
+
+
+
+
+
+
 #[derive(Debug, Clone)]
 pub struct StreamingOrderflow {
     delta_alpha: f64,
@@ -55,12 +55,12 @@ impl StreamingOrderflow {
         }
     }
 
-    /// Default: 14-period EMA for delta, 20-period SMA for volume.
+
     pub fn with_defaults() -> Self {
         Self::new(14, 20)
     }
 
-    /// Update with a new candle.
+
     pub fn update(&mut self, open: f64, high: f64, low: f64, close: f64, volume: f64) {
         let range = high - low;
         let body_pct = if range > 0.0 {
@@ -124,7 +124,7 @@ impl StreamingOrderflow {
         }
     }
 
-    /// Flow score for a given direction.
+
     pub fn flow_score(&self, is_demand: bool) -> f64 {
         if is_demand {
             self.last_demand_score

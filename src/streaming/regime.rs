@@ -1,13 +1,13 @@
-//! Regime detection combining Hurst, ADX, and Choppiness.
-//!
-//! Provides the same interface as Python's regime module but with
-//! incremental/cached computation for massive performance gains.
+
+
+
+
 
 use super::{
     adx::StreamingAdx, choppiness::ChoppinessIndex, hurst::CachedHurst, sma::IncrementalSma,
 };
 
-/// Regime state with all indicator values.
+
 #[derive(Debug, Clone, Default)]
 pub struct RegimeState {
     pub hurst: Option<f64>,
@@ -18,19 +18,19 @@ pub struct RegimeState {
     pub label: String,
 }
 
-/// Incremental regime detector.
-///
-/// Combines cached Hurst, streaming ADX, and Choppiness Index
-/// for efficient per-candle updates.
+
+
+
+
 #[derive(Debug, Clone)]
 pub struct RegimeDetector {
-    // Indicator instances
+
     hurst: CachedHurst,
     adx: StreamingAdx,
     choppiness: ChoppinessIndex,
     volume_sma: IncrementalSma,
 
-    // Thresholds (matching Python defaults)
+
     hurst_threshold: f64,
     adx_threshold: f64,
     choppiness_threshold: f64,
@@ -43,15 +43,15 @@ impl Default for RegimeDetector {
 }
 
 impl RegimeDetector {
-    /// Create a new regime detector with custom thresholds.
-    ///
-    /// Favorable regime for S&D patterns:
-    /// - Hurst < hurst_threshold (mean-reverting)
-    /// - ADX < adx_threshold (non-trending)
-    /// - Choppiness > choppiness_threshold (ranging)
+
+
+
+
+
+
     pub fn new(hurst_threshold: f64, adx_threshold: f64, choppiness_threshold: f64) -> Self {
         Self {
-            hurst: CachedHurst::new(100, 20), // Recompute every 20 candles
+            hurst: CachedHurst::new(100, 20),
             adx: StreamingAdx::new(14),
             choppiness: ChoppinessIndex::new(14),
             volume_sma: IncrementalSma::new(20),
@@ -61,20 +61,20 @@ impl RegimeDetector {
         }
     }
 
-    /// Update regime state with a new candle.
-    ///
-    /// This is O(1) for ADX and Choppiness, O(n) for Hurst but only every N candles.
+
+
+
     pub fn update(&mut self, high: f64, low: f64, close: f64, volume: f64) -> RegimeState {
-        // Update all indicators
+
         let hurst = self.hurst.update(close);
         let adx = self.adx.update(high, low, close);
         let choppiness = self.choppiness.update(high, low, close);
 
-        // Calculate RVOL
+
         self.volume_sma.update(volume);
         let rvol = self.volume_sma.current().map(|avg| volume / avg);
 
-        // Determine if regime is favorable
+
         let is_favorable = self.is_favorable_regime(hurst, adx, choppiness);
         let label = self.get_regime_label(hurst, adx, choppiness);
 
@@ -88,19 +88,19 @@ impl RegimeDetector {
         }
     }
 
-    /// Check if current regime is favorable for S&D patterns.
+
     fn is_favorable_regime(
         &self,
         hurst: Option<f64>,
         adx: Option<f64>,
         choppiness: Option<f64>,
     ) -> bool {
-        // If all indicators are None, default to favorable
+
         if hurst.is_none() && adx.is_none() && choppiness.is_none() {
             return true;
         }
 
-        // Check each available indicator
+
         if let Some(h) = hurst {
             if h >= self.hurst_threshold {
                 return false;
@@ -122,7 +122,7 @@ impl RegimeDetector {
         true
     }
 
-    /// Get a descriptive label for the current regime.
+
     fn get_regime_label(
         &self,
         hurst: Option<f64>,
@@ -172,14 +172,14 @@ impl RegimeDetector {
         }
     }
 
-    /// Check if all indicators are ready.
+
     pub fn is_ready(&self) -> bool {
         self.hurst.is_ready() && self.adx.is_ready() && self.choppiness.is_ready()
     }
 
-    /// Compute regime state for entire arrays (batch mode).
-    ///
-    /// Returns vector of RegimeState for each candle.
+
+
+
     pub fn compute_batch(
         highs: &[f64],
         lows: &[f64],
@@ -246,9 +246,9 @@ mod tests {
 
         assert_eq!(results.len(), highs.len());
 
-        // Later results should have valid data
+
         let last = &results[199];
-        // At least some indicators should be ready by now
+
         assert!(last.adx.is_some() || last.choppiness.is_some());
     }
 
@@ -256,16 +256,16 @@ mod tests {
     fn test_favorable_regime_logic() {
         let detector = RegimeDetector::default();
 
-        // Mean-reverting + non-trending + choppy = favorable
+
         assert!(detector.is_favorable_regime(Some(0.40), Some(20.0), Some(60.0)));
 
-        // Trending Hurst = unfavorable
+
         assert!(!detector.is_favorable_regime(Some(0.55), Some(20.0), Some(60.0)));
 
-        // High ADX = unfavorable
+
         assert!(!detector.is_favorable_regime(Some(0.40), Some(30.0), Some(60.0)));
 
-        // Low choppiness = unfavorable
+
         assert!(!detector.is_favorable_regime(Some(0.40), Some(20.0), Some(50.0)));
     }
 }

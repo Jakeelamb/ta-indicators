@@ -1,10 +1,10 @@
-//! TA-Lib warmup-exact parity for the Hilbert Transform family.
-//!
-//! Kept separate from `talib_parity.rs` so the candlestick port and the
-//! Hilbert port can land without touching the same test file. Shares the same
-//! committed fixture (`tests/fixtures/talib_parity.json`) and the same
-//! warmup-exact policy: the Rust output must match TA-Lib on every bar where
-//! TA-Lib emitted a value.
+
+
+
+
+
+
+
 
 use serde_json::Value;
 use ta_indicators as ta;

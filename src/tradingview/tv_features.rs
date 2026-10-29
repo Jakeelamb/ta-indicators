@@ -1,7 +1,7 @@
-//! Golden TradingView-backed feature families.
-//!
-//! This module contains only the implementation code needed by the supported
-//! CSV-validated indicator surface.
+
+
+
+
 
 use super::{
     Candle, close_series, ema, rolling_max, rolling_min, rolling_stddev, safe_div, sma, wilders_atr,

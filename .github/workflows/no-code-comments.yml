@@ -1,0 +1,10 @@
+name: No code comments
+on: [push, pull_request]
+jobs:
+  no-code-comments:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --python 3.12 --no-project --with tree-sitter==0.25.2 --with tree-sitter-language-pack==0.13.0 python -B -m unittest discover -s scripts/comment-policy -v
+      - run: uv run --python 3.12 --no-project --with tree-sitter==0.25.2 --with tree-sitter-language-pack==0.13.0 python -B scripts/comment-policy/comment_policy.py --repo . --notices SOURCE_NOTICES.md
